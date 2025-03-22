@@ -148,19 +148,44 @@ async function run() {
 
         // stored user into the mongodb API 
         app.post('/register', async (req, res) => {
-            const userData = req.body
-            const userExist = await usersCollection.findOne({ email: userData.email })
-            if (userExist) {
-                res.json({ status: false, message: "User already exists" })
-            } else {
-                const result = await usersCollection.insertOne(userData)
+            try {
+                const user = req.body;
+                const existingUser = await usersCollection.findOne({ email: user?.email });
+
+                if (existingUser) {
+                    const updatedData = {
+                        $set: {
+                            lastLoginTime: user?.lastLoginTime
+                        }
+                    };
+                    const result = await usersCollection.updateOne({ email: user?.email }, updatedData);
+
+                    return res.json({
+                        status: false,
+                        message: 'User already exists, lastSignInTime updated',
+                        data: result
+                    });
+                }
+                const withRole = {
+                    ...user, role: "user"
+                }
+                const insertResult = await usersCollection.insertOne(withRole);
                 res.json({
                     status: true,
-                    result
-                })
-            }
+                    message: 'User added successfully',
+                    data: insertResult
+                });
 
-        })
+
+            } catch (error) {
+                console.error('Error adding/updating user:', error);
+                res.status(500).json({
+                    status: false,
+                    message: 'Failed to add or update userr',
+                    error: error.message
+                });
+            }
+        });
 
     } catch (error) {
         console.error("❌ MongoDB Connection Error:", error);
