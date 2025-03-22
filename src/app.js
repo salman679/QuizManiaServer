@@ -45,13 +45,16 @@ async function run() {
         // Quizzes Collection
         const quizzesCollection = database.collection("quizzes")
 
+        // Users Collection 
+        const usersCollection = database.collection("users")
+
         // Create quiz API
         app.post('/generate-quiz', async (req, res) => {
             try {
                 const { topic, difficulty, quantity, quizType } = req.body;
 
                 // **Improved Prompting for Strict JSON Response**
-                
+
                 const prompt = `
                     Generate a ${difficulty} level quiz on "${topic}" with ${quizType} questions.
                     - Number of Questions: ${quantity}
@@ -99,7 +102,7 @@ async function run() {
 
                 const updatedData = {
                     parsedQuizData,
-                    userEmail : "dummy@gmail.com",
+                    userEmail: "dummy@gmail.com",
                 }
 
                 const result = await quizzesCollection.insertOne(updatedData)
@@ -124,25 +127,79 @@ async function run() {
         });
 
         // get the quiz set that user just created 
-        app.get('/get-quiz-set/:id', async(req, res) => {
+        app.get('/get-quiz-set/:id', async (req, res) => {
             const id = req.params.id;
             const result = await quizzesCollection.findOne({ _id: new ObjectId(id) });
             res.json(result);
         })
 
         // checking the quiz answer 
-        app.post('/answer/checking', async(req, res) => {
+        app.post('/answer/checking', async (req, res) => {
             const { id, answers } = req.body;
             const quiz = await quizzesCollection.findOne({ _id: new ObjectId(id) });
             let score = 0;
             quiz.parsedQuizData.forEach((question, index) => {
-                if(question.answer === answers[index]) {
+                if (question.answer === answers[index]) {
                     score++;
                 }
             })
             res.json({ score });
         })
 
+        // stored user into the mongodb API 
+        app.post('/register', async (req, res) => {
+            try {
+                const user = req.body;
+                const existingUser = await usersCollection.findOne({ email: user?.email });
+
+                if (existingUser) {
+                    const updatedData = {
+                        $set: {
+                            lastLoginTime: user?.lastLoginTime
+                        }
+                    };
+                    const result = await usersCollection.updateOne({ email: user?.email }, updatedData);
+
+                    return res.json({
+                        status: false,
+                        message: 'User already exists, lastSignInTime updated',
+                        data: result
+                    });
+                }
+                const withRole = {
+                    ...user, role: "user"
+                }
+                const insertResult = await usersCollection.insertOne(withRole);
+                res.json({
+                    status: true,
+                    message: 'User added successfully',
+                    data: insertResult
+                });
+
+
+            } catch (error) {
+                console.error('Error adding/updating user:', error);
+                res.status(500).json({
+                    status: false,
+                    message: 'Failed to add or update userr',
+                    error: error.message
+                });
+            }
+        });
+
+        // get a user from the mongodb by email API 
+        app.get('/user/:email', async (req, res) => {
+            const email = req.params.email
+            const user = await usersCollection.findOne({ email })
+            if (!user) {
+                res.json({ status: false, message: "User not found" })
+            }
+            res.json({
+                status: true,
+                userInfo: user
+            })
+        })
+        
     } catch (error) {
         console.error("❌ MongoDB Connection Error:", error);
     }
