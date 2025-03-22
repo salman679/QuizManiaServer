@@ -45,13 +45,16 @@ async function run() {
         // Quizzes Collection
         const quizzesCollection = database.collection("quizzes")
 
+        // Users Collection 
+        const usersCollection = database.collection("users")
+
         // Create quiz API
         app.post('/generate-quiz', async (req, res) => {
             try {
                 const { topic, difficulty, quantity, quizType } = req.body;
 
                 // **Improved Prompting for Strict JSON Response**
-                
+
                 const prompt = `
                     Generate a ${difficulty} level quiz on "${topic}" with ${quizType} questions.
                     - Number of Questions: ${quantity}
@@ -99,7 +102,7 @@ async function run() {
 
                 const updatedData = {
                     parsedQuizData,
-                    userEmail : "dummy@gmail.com",
+                    userEmail: "dummy@gmail.com",
                 }
 
                 const result = await quizzesCollection.insertOne(updatedData)
@@ -124,23 +127,39 @@ async function run() {
         });
 
         // get the quiz set that user just created 
-        app.get('/get-quiz-set/:id', async(req, res) => {
+        app.get('/get-quiz-set/:id', async (req, res) => {
             const id = req.params.id;
             const result = await quizzesCollection.findOne({ _id: new ObjectId(id) });
             res.json(result);
         })
 
         // checking the quiz answer 
-        app.post('/answer/checking', async(req, res) => {
+        app.post('/answer/checking', async (req, res) => {
             const { id, answers } = req.body;
             const quiz = await quizzesCollection.findOne({ _id: new ObjectId(id) });
             let score = 0;
             quiz.parsedQuizData.forEach((question, index) => {
-                if(question.answer === answers[index]) {
+                if (question.answer === answers[index]) {
                     score++;
                 }
             })
             res.json({ score });
+        })
+
+        // stored user into the mongodb API 
+        app.post('/register', async (req, res) => {
+            const userData = req.body
+            const userExist = await usersCollection.findOne({ email: userData.email })
+            if (userExist) {
+                res.json({ status: false, message: "User already exists" })
+            } else {
+                const result = await usersCollection.insertOne(userData)
+                res.json({
+                    status: true,
+                    result
+                })
+            }
+
         })
 
     } catch (error) {
