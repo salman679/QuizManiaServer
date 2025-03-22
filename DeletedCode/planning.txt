@@ -1,0 +1,15 @@
+1. id diye amder user jeita generate oita amra get er maddhome pabo
+2. checking quizzes answer: front end : 
+[
+    when checking is over then add two field :
+    correction parsantage: 30%
+    wrong parsantage:70%
+    {
+        ques:1,
+        ans: "define" == database patch eitar "correct"
+    },
+    {
+        ques:2,
+        ans: "define 2"
+    }
+]
