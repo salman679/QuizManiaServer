@@ -52,17 +52,17 @@ async function run() {
         app.post('/generate-quiz', async (req, res) => {
             try {
                 const { user, quizCriteria } = req.body;
-                console.log(req.body)
-                // *Improved Prompting for Strict JSON Response*
+
+                // **Improved Prompting for Strict JSON Response**
 
                 const prompt = `
                     Generate a ${quizCriteria.difficulty} level quiz on "${quizCriteria.topic}" with ${quizCriteria.quizType} questions.
                     - Number of Questions: ${quizCriteria.quantity}
                     - Return ONLY a valid JSON array. No extra text.
                     - Each question should have:
-                        - "type": ${quizCriteria.quizType}
-                        - "question": (Text of the question based on ${quizCriteria.topic})
-                        - "options": (Array of choices, only for multiple-choice and for true/false give array of choices of True and False)
+                        - "type": (Multiple Choice / True or False)
+                        - "question": (Text of the question)
+                        - "options": (Array of choices, only for multiple-choice)
                         - "answer": (Correct answer)
                     
                     Example Output:
@@ -83,11 +83,12 @@ async function run() {
                 const response = await model.generateContent([prompt]);
 
                 const quizData = response.response.candidates[0].content.parts[0].text;
+                // const demo = response.response
 
-                console.log("🔹 Raw AI Response:", quizData);
+                // console.log("🔹 Raw AI Response:", quizData);
 
-                // *Extract JSON if wrapped in extra text*
-                const jsonMatch = quizData.match(/json([\s\S]*?)/);
+                // **Extract JSON if wrapped in extra text**
+                const jsonMatch = quizData.match(/```json([\s\S]*?)```/);
                 const cleanJson = jsonMatch ? jsonMatch[1].trim() : quizData;
 
                 // Parse the quiz data
@@ -100,8 +101,9 @@ async function run() {
                 }
 
                 const updatedData = {
+                    user,
+                    quizCriteria,
                     parsedQuizData,
-                    user: user
                 }
 
                 const result = await quizzesCollection.insertOne(updatedData)
@@ -110,9 +112,10 @@ async function run() {
                 res.json({
                     status: true,
                     message: "✅ Successfully generated quiz from AI",
+                    result,
+                    user,
                     quizCriteria,
-                    quizzes: parsedQuizData,
-                    result
+                    quizzes: parsedQuizData
                 });
 
             } catch (err) {
