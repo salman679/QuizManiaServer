@@ -15,7 +15,7 @@ app.use(morgan('dev'))
 app.use(cors({
     origin: [
         'http://localhost:3000',
-        'https://quizmania-chi.vercel.app'
+        'https://quizmania-kappa.vercel.app',
     ],
     credentials: true
 }))
