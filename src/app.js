@@ -51,18 +51,18 @@ async function run() {
         // Create quiz API
         app.post('/generate-quiz', async (req, res) => {
             try {
-                const { topic, difficulty, quantity, quizType } = req.body;
-
-                // **Improved Prompting for Strict JSON Response**
+                const { user, quizCriteria } = req.body;
+                console.log(req.body)
+                // *Improved Prompting for Strict JSON Response*
 
                 const prompt = `
-                    Generate a ${difficulty} level quiz on "${topic}" with ${quizType} questions.
-                    - Number of Questions: ${quantity}
+                    Generate a ${quizCriteria.difficulty} level quiz on "${quizCriteria.topic}" with ${quizCriteria.quizType} questions.
+                    - Number of Questions: ${quizCriteria.quantity}
                     - Return ONLY a valid JSON array. No extra text.
                     - Each question should have:
-                        - "type": (Multiple Choice / True or False)
-                        - "question": (Text of the question)
-                        - "options": (Array of choices, only for multiple-choice)
+                        - "type": ${quizCriteria.quizType}
+                        - "question": (Text of the question based on ${quizCriteria.topic})
+                        - "options": (Array of choices, only for multiple-choice and for true/false give array of choices of True and False)
                         - "answer": (Correct answer)
                     
                     Example Output:
@@ -83,12 +83,11 @@ async function run() {
                 const response = await model.generateContent([prompt]);
 
                 const quizData = response.response.candidates[0].content.parts[0].text;
-                // const demo = response.response
 
-                // console.log("🔹 Raw AI Response:", quizData);
+                console.log("🔹 Raw AI Response:", quizData);
 
-                // **Extract JSON if wrapped in extra text**
-                const jsonMatch = quizData.match(/```json([\s\S]*?)```/);
+                // *Extract JSON if wrapped in extra text*
+                const jsonMatch = quizData.match(/json([\s\S]*?)/);
                 const cleanJson = jsonMatch ? jsonMatch[1].trim() : quizData;
 
                 // Parse the quiz data
@@ -102,20 +101,16 @@ async function run() {
 
                 const updatedData = {
                     parsedQuizData,
-                    userEmail: "dummy@gmail.com",
+                    user: user
                 }
 
                 const result = await quizzesCollection.insertOne(updatedData)
 
                 // Send the response
                 res.json({
-                    // demo,
                     status: true,
                     message: "✅ Successfully generated quiz from AI",
-                    quantity,
-                    difficulty,
-                    quizType,
-                    topic,
+                    quizCriteria,
                     quizzes: parsedQuizData,
                     result
                 });
@@ -199,7 +194,7 @@ async function run() {
                 userInfo: user
             })
         })
-        
+
     } catch (error) {
         console.error("❌ MongoDB Connection Error:", error);
     }
