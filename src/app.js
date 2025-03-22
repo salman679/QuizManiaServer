@@ -187,6 +187,19 @@ async function run() {
             }
         });
 
+        // get a user from the mongodb by email API 
+        app.get('/user/:email', async (req, res) => {
+            const email = req.params.email
+            const user = await usersCollection.findOne({ email })
+            if (!user) {
+                res.json({ status: false, message: "User not found" })
+            }
+            res.json({
+                status: true,
+                userInfo: user
+            })
+        })
+        
     } catch (error) {
         console.error("❌ MongoDB Connection Error:", error);
     }
