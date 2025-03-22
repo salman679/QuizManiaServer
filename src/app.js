@@ -4,28 +4,28 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const express = require('express');
 const morgan = require('morgan');
 const cors = require('cors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
 const bcrypt = require("bcrypt");
 
-const app = express();
-app.use(express.json());
-app.use(morgan('dev'));
+const app = express()
+app.use(express.json())
+app.use(morgan('dev'))
 app.use(cors({
     origin: [
         'http://localhost:3000',
         'https://quizmania-chi.vercel.app'
     ],
     credentials: true
-}));
+}))
 app.use(cookieParser());
 
 // MongoDB connection
 const uri = `mongodb+srv://${process.env.USER_NAME}:${process.env.PASSWORD}@cluster0.4ayta.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Gemini API client
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY); 
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
 
 const client = new MongoClient(uri, {
     serverApi: {
@@ -57,7 +57,7 @@ async function run() {
                     - Number of Questions: ${quantity}
                     - Return ONLY a valid JSON array. No extra text.
                     - Each question should have:
-                        - "type": (Multiple Choice / True or False / Fill in the Blanks)
+                        - "type": (Multiple Choice / True or False)
                         - "question": (Text of the question)
                         - "options": (Array of choices, only for multiple-choice)
                         - "answer": (Correct answer)
@@ -78,8 +78,9 @@ async function run() {
                 const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
                 const response = await model.generateContent([prompt]);
-                
+
                 const quizData = response.response.candidates[0].content.parts[0].text;
+                // const demo = response.response
 
                 // console.log("🔹 Raw AI Response:", quizData);
 
@@ -98,20 +99,22 @@ async function run() {
 
                 const updatedData = {
                     parsedQuizData,
-                    user : "jaber"
+                    userEmail : "dummy@gmail.com",
                 }
 
-                quizzesCollection.insertOne(updatedData)
+                const result = await quizzesCollection.insertOne(updatedData)
 
                 // Send the response
                 res.json({
+                    // demo,
                     status: true,
                     message: "✅ Successfully generated quiz from AI",
                     quantity,
                     difficulty,
                     quizType,
                     topic,
-                    quizzes: parsedQuizData
+                    quizzes: parsedQuizData,
+                    result
                 });
 
             } catch (err) {
@@ -119,6 +122,26 @@ async function run() {
                 res.status(500).json({ status: false, message: err.message });
             }
         });
+
+        // get the quiz set that user just created 
+        app.get('/get-quiz-set/:id', async(req, res) => {
+            const id = req.params.id;
+            const result = await quizzesCollection.findOne({ _id: new ObjectId(id) });
+            res.json(result);
+        })
+
+        // checking the quiz answer 
+        app.post('/answer/checking', async(req, res) => {
+            const { id, answers } = req.body;
+            const quiz = await quizzesCollection.findOne({ _id: new ObjectId(id) });
+            let score = 0;
+            quiz.parsedQuizData.forEach((question, index) => {
+                if(question.answer === answers[index]) {
+                    score++;
+                }
+            })
+            res.json({ score });
+        })
 
     } catch (error) {
         console.error("❌ MongoDB Connection Error:", error);
@@ -132,3 +155,34 @@ app.get('/', (req, res) => {
 });
 
 module.exports = app;
+
+
+
+
+// "text": "```json\n[\n  {\n    \"type\": \"Multiple Choice\",\n    \"question\": \"What keyword is used to define a function in Python?\",\n    \"options\": [\"def\", \"function\", \"define\", \"func\"],\n    \"answer\": \"def\"\n  },\n  {\n    \"type\": \"Multiple Choice\",\n    \"question\": \"Which of the following is NOT a built-in data type in Python?\",\n    \"options\": [\"Integer\", \"String\", \"Float\", \"Character\"],\n    \"answer\": \"Character\"\n  }\n]\n```"
+
+
+// "quizzes": [
+//         {
+//             "type": "Multiple Choice",
+//             "question": "What keyword is used to define a function in Python?",
+//             "options": [
+//                 "def",
+//                 "function",
+//                 "define",
+//                 "func"
+//             ],
+//             "answer": "def"
+//         },
+//         {
+//             "type": "Multiple Choice",
+//             "question": "Which of the following is NOT a built-in data type in Python?",
+//             "options": [
+//                 "Integer",
+//                 "String",
+//                 "Float",
+//                 "Character"
+//             ],
+//             "answer": "Character"
+//         }
+//     ]
