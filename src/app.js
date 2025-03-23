@@ -62,7 +62,7 @@ async function run() {
                     - Each question should have:
                         - "type": (Multiple Choice / True or False)
                         - "question": (Text of the question)
-                        - "options": (Array of choices, only for multiple-choice)
+                        - "options": (Array of choices, only for multiple-choice and true/false type options allowed true false)
                         - "answer": (Correct answer)
                     
                     Example Output:
