@@ -168,6 +168,7 @@ async function run() {
                 res.json({
                     status: true,
                     totalQuizInSet,
+                    quizSet,
                     correctQuizAnswer, // ✅ Now this should not be NaN
                     wrongQuizAnswer: totalQuizInSet - correctQuizAnswer, // ✅ Ensure correct value
                 });
