@@ -135,7 +135,7 @@ async function run() {
         app.post('/answer/checking', async (req, res) => {
             try {
                 const { id, answers } = req.body;
-                const quizSet = await quizzesCollection.findOne({ _id: new ObjectId(id) });
+                let quizSet = await quizzesCollection.findOne({ _id: new ObjectId(id) });
 
                 if (!quizSet) {
                     return res.json({ status: false, message: "Quiz not found" });
@@ -164,6 +164,9 @@ async function run() {
                     { _id: new ObjectId(id) },
                     { $set: { correctQuizAnswer, wrongQuizAnswer: totalQuizInSet - correctQuizAnswer, status: "solved" } }
                 );
+
+                // override quizSet 
+                quizSet = await quizzesCollection.findOne({ _id: new ObjectId(id) });
 
                 res.json({
                     status: true,
