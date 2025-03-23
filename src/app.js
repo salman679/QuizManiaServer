@@ -133,19 +133,54 @@ async function run() {
 
         // checking the quiz answer 
         app.post('/answer/checking', async (req, res) => {
-            const { id, answers } = req.body;
-            const quiz = await quizzesCollection.findOne({ _id: new ObjectId(id) });
-            let score = 0;
-            quiz.parsedQuizData.forEach((question, index) => {
-                if (question.answer === answers[index]) {
-                    score++;
+            try {
+                const { id, answers } = req.body;
+                const quizSet = await quizzesCollection.findOne({ _id: new ObjectId(id) });
+
+                if (!quizSet) {
+                    return res.json({ status: false, message: "Quiz not found" });
                 }
-            })
-            res.json({ score });
-        })
+
+                const totalQuizInSet = quizSet.parsedQuizData.length;
+                let correctQuizAnswer = 0;
+
+                const updatePromises = answers.map(async (answer, index) => {
+                    const quizQuestion = quizSet.parsedQuizData[index];
+
+                    if (quizQuestion.question === answer.question && quizQuestion.answer === answer.userAnswer) {
+                        correctQuizAnswer++;
+                    }
+
+                    return quizzesCollection.updateOne(
+                        { _id: new ObjectId(id), "parsedQuizData.question": quizQuestion.question },
+                        { $set: { "parsedQuizData.$.userAnswer": answer.userAnswer } }
+                    );
+                });
+
+                await Promise.all(updatePromises); // Wait for all updates
+
+                // Update correct & incorrect answer counts
+                await quizzesCollection.updateOne(
+                    { _id: new ObjectId(id) },
+                    { $set: { correctQuizAnswer, wrongQuizAnswer: totalQuizInSet - correctQuizAnswer } }
+                );
+
+                res.json({
+                    status: true,
+                    totalQuizInSet,
+                    quizSet,
+                    // correctQuizAnswer,
+                    // wrongQuizAnswer: totalQuizInSet - correctQuizAnswer,
+                });
+
+            } catch (err) {
+                console.error("❌ Error checking quiz:", err);
+                res.status(500).json({ status: false, message: err.message });
+            }
+        });
 
         // stored user into the mongodb API 
-        app.post('/register', async (req, res) => {
+        app.post('/signup', async (req, res) => {
             try {
                 const user = req.body;
                 const existingUser = await usersCollection.findOne({ email: user?.email });
@@ -186,7 +221,7 @@ async function run() {
         });
 
         // get a user from the mongodb by email API 
-        app.get('/user/:email', async (req, res) => {
+        app.get('/signin/:email', async (req, res) => {
             const email = req.params.email
             const user = await usersCollection.findOne({ email })
             if (!user) {
