@@ -142,24 +142,24 @@ async function run() {
                 }
 
                 const totalQuizInSet = quizSet.parsedQuizData.length;
-                let correctQuizAnswer = 0;
+                let correctQuizAnswer = 0; // ✅ Initialize properly
 
-                const updatePromises = answers.map(async (answer, index) => {
+                const updatePromises = answers.map((answer, index) => {
                     const quizQuestion = quizSet.parsedQuizData[index];
 
                     if (quizQuestion.question === answer.question && quizQuestion.answer === answer.userAnswer) {
-                        correctQuizAnswer++;
+                        correctQuizAnswer++; // ✅ Synchronously update count
                     }
 
                     return quizzesCollection.updateOne(
                         { _id: new ObjectId(id), "parsedQuizData.question": quizQuestion.question },
-                        { $set: { "parsedQuizData.$.userAnswer": answer.userAnswer, "parsedQuizData.$.status": answer.userAnswer == quizQuestion.answer ? "correct" : "wrong" } }
+                        { $set: { "parsedQuizData.$.userAnswer": answer.userAnswer, "parsedQuizData.$.status": answer.userAnswer === quizQuestion.answer ? "correct" : "wrong" } }
                     );
                 });
 
-                await Promise.all(updatePromises); // Wait for all updates
+                await Promise.all(updatePromises); // ✅ Wait for all updates
 
-                // Update correct & incorrect answer counts
+                // ✅ Update correct & incorrect answer counts in the database
                 await quizzesCollection.updateOne(
                     { _id: new ObjectId(id) },
                     { $set: { correctQuizAnswer, wrongQuizAnswer: totalQuizInSet - correctQuizAnswer, status: "solved" } }
@@ -169,8 +169,8 @@ async function run() {
                     status: true,
                     totalQuizInSet,
                     quizSet,
-                    // correctQuizAnswer,
-                    // wrongQuizAnswer: totalQuizInSet - correctQuizAnswer,
+                    correctQuizAnswer, // ✅ Now this should not be NaN
+                    wrongQuizAnswer: totalQuizInSet - correctQuizAnswer, // ✅ Ensure correct value
                 });
 
             } catch (err) {
