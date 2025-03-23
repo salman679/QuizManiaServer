@@ -153,7 +153,7 @@ async function run() {
 
                     return quizzesCollection.updateOne(
                         { _id: new ObjectId(id), "parsedQuizData.question": quizQuestion.question },
-                        { $set: { "parsedQuizData.$.userAnswer": answer.userAnswer } }
+                        { $set: { "parsedQuizData.$.userAnswer": answer.userAnswer, "parsedQuizData.$.status": answer.userAnswer == quizQuestion.answer ? "correct" : "wrong" } }
                     );
                 });
 
@@ -162,7 +162,7 @@ async function run() {
                 // Update correct & incorrect answer counts
                 await quizzesCollection.updateOne(
                     { _id: new ObjectId(id) },
-                    { $set: { correctQuizAnswer, wrongQuizAnswer: totalQuizInSet - correctQuizAnswer } }
+                    { $set: { correctQuizAnswer, wrongQuizAnswer: totalQuizInSet - correctQuizAnswer, status: "solved" } }
                 );
 
                 res.json({
