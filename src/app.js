@@ -16,6 +16,8 @@ app.use(cors({
     origin: [
         'http://localhost:3000',
         'https://quizmaniaa.vercel.app',
+        'https://quiz-maniaa.vercel.app',
+        'https://quizzmaniaa.vercel.app'
     ],
     credentials: true
 }))
