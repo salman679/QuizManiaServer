@@ -187,25 +187,21 @@ async function run() {
         // stored user into the mongodb API 
         app.post('/signup', async (req, res) => {
             try {
-                const user = req.body;
+                const { password, ...user } = req.body;
                 const existingUser = await usersCollection.findOne({ email: user?.email });
 
                 if (existingUser) {
-                    const updatedData = {
-                        $set: {
-                            lastLoginTime: user?.lastLoginTime
-                        }
-                    };
-                    const result = await usersCollection.updateOne({ email: user?.email }, updatedData);
-
                     return res.json({
                         status: false,
-                        message: 'User already exists, lastSignInTime updated',
+                        message: 'User already exists, use another email address',
                         data: result
                     });
                 }
+
+                const hashedPass = await bcrypt.hash(password, 10)
+
                 const withRole = {
-                    ...user, role: "user"
+                    ...user, password: hashedPass, role: "user", failedAttempts: 0, block: false
                 }
                 const insertResult = await usersCollection.insertOne(withRole);
                 res.json({
@@ -228,13 +224,62 @@ async function run() {
         // get a user from the mongodb by email API 
         app.get('/signin/:email', async (req, res) => {
             const email = req.params.email
-            const user = await usersCollection.findOne({ email })
+
+            const { password } = req.body
+
+            let user = await usersCollection.findOne({ email })
             if (!user) {
                 res.json({ status: false, message: "User not found" })
+                return
             }
+
+            if (user?.block) {
+                res.json({ status: false, message: "This Email has been blocked, Please contact with admin!" })
+                return
+            }
+
+            const match = await bcrypt.compare(password, user?.password)
+
+            if (!match) {
+                if (user?.failedAttempts == 4) {
+                    await usersCollection.updateOne({ email: email }, {
+                        $set: {
+                            block: true
+                        }
+                    })
+                    res.json({ status: false, message: "Your Email Has been blocked Please contact with admin!" })
+                    return
+                }
+                else {
+                    const updateFailedAttempts = {
+                        $inc: {
+                            failedAttempts: 1
+                        }
+                    }
+                    await usersCollection.updateOne({ email: email }, updateFailedAttempts)
+                    user = await usersCollection.findOne({ email: email })
+                    res.json({ status: false, message: `Incorrect Password, Left ${5 - user?.failedAttempts} Attempts`, failedAttempts: user?.failedAttempts })
+                    return
+                }
+            }
+
+            await usersCollection.updateOne({ email: email }, {
+                $set: {
+                    failedAttempts: 0
+                }
+            })
+
+            const updatedData = {
+                $set: {
+                    lastLoginTime: user?.lastLoginTime
+                }
+            };
+            
+            await usersCollection.updateOne({ email: user?.email }, updatedData);
             res.json({
                 status: true,
-                userInfo: user
+                userInfo: user,
+                message: "Login Successfully"
             })
         })
 
@@ -252,6 +297,15 @@ app.get('/', (req, res) => {
 module.exports = app;
 
 
+
+
+// pass bhul > failedAttempt + 1
+// pass bhul > failedAttempt + 1
+// pass bhul > failedAttempt + 1
+// pass bhul > failedAttempt + 1
+// pass bhul > failedAttempt + 1
+
+// block: true failedAttempt == 5
 
 
 // "text": "```json\n[\n  {\n    \"type\": \"Multiple Choice\",\n    \"question\": \"What keyword is used to define a function in Python?\",\n    \"options\": [\"def\", \"function\", \"define\", \"func\"],\n    \"answer\": \"def\"\n  },\n  {\n    \"type\": \"Multiple Choice\",\n    \"question\": \"Which of the following is NOT a built-in data type in Python?\",\n    \"options\": [\"Integer\", \"String\", \"Float\", \"Character\"],\n    \"answer\": \"Character\"\n  }\n]\n```"
