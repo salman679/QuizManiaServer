@@ -222,7 +222,7 @@ async function run() {
         });
 
         // get a user from the mongodb by email API 
-        app.get('/signin/:email', async (req, res) => {
+        app.post('/signin/:email', async (req, res) => {
             const email = req.params.email
 
             const { password } = req.body
