@@ -225,7 +225,7 @@ async function run() {
         app.post('/signin/:email', async (req, res) => {
             const email = req.params.email
 
-            const { password } = req.body
+            const { password, ...userInfo } = req.body
 
             let user = await usersCollection.findOne({ email })
             if (!user) {
@@ -271,15 +271,29 @@ async function run() {
 
             const updatedData = {
                 $set: {
-                    lastLoginTime: user?.lastLoginTime
+                    lastLoginTime: userInfo?.lastLoginTime
                 }
             };
-            
+
             await usersCollection.updateOne({ email: user?.email }, updatedData);
             res.json({
                 status: true,
                 userInfo: user,
                 message: "Login Successfully"
+            })
+        })
+
+        // get user for auth js 
+        app.get('/signin/:email', async (req, res) => {
+            const email = req.params.email
+            const userExist = await usersCollection.findOne({ email: email })
+            if (!userExist) {
+                res.json({ status: false, message: "User Not Found" })
+                return
+            }
+            res.json({
+                status: true,
+                userInfo: userExist
             })
         })
 
