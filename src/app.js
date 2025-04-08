@@ -310,8 +310,8 @@ async function run() {
             const html = `
                 <p>Hi, ${userExist.username},</p>
                 <p>Here's your password recovery link</p>
-                <a href="https://localhost:3000/auth/reset-password?secretcode=${userExist?._id}">Reset password here</a>
-                <p>Best regards, QuizMania</p>
+                <a href="http://localhost:3000/auth/reset-password?secretcode=${userExist?._id}">Reset password here</a>
+                <p>Best regards, QuizMania </p>
             `;
 
             const transporter = nodemailer.createTransport({
