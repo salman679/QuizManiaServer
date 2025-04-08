@@ -310,7 +310,7 @@ async function run() {
             const html = `
                 <p>Hi, ${userExist.username},</p>
                 <p>Here's your password recovery link</p>
-                <a href="http://localhost:3000/auth/reset-password?secretcode=${userExist?._id}">Reset password here</a>
+                <a href="https://localhost:3000/auth/reset-password?secretcode=${userExist?._id}">Reset password here</a>
                 <p>Best regards, QuizMania</p>
             `;
 
@@ -336,7 +336,6 @@ async function run() {
                 info: info,
             });
         })
-
 
         app.patch('/reset-password/:id', async (req, res) => {
             try {
@@ -374,7 +373,6 @@ async function run() {
             }
         });
         
-
     } catch (error) {
         console.error("❌ MongoDB Connection Error:", error);
     }
