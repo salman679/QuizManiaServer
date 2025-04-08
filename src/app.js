@@ -337,7 +337,7 @@ async function run() {
             });
         })
 
-        
+
         app.patch('/reset-password/:id', async (req, res) => {
             try {
                 const id = req.params.id;
@@ -360,7 +360,7 @@ async function run() {
         
                 await usersCollection.updateOne({ _id: new ObjectId(id) }, updateDoc);
         
-                res.status(200).json({
+                res.json({
                     status: true,
                     message: "Password successfully changed"
                 });
