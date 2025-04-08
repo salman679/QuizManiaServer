@@ -336,6 +336,43 @@ async function run() {
                 info: info,
             });
         })
+
+        app.patch('/reset-password/:id', async (req, res) => {
+            try {
+                const id = req.params.id;
+                const { password } = req.body;
+        
+                const user = await usersCollection.findOne({ _id: new ObjectId(id) });
+        
+                if (!user) {
+                    return res.status(404).json({
+                        status: false,
+                        message: "User not found"
+                    });
+                }
+        
+                const hashedPass = await bcrypt.hash(password, 10);
+        
+                const updateDoc = {
+                    $set: { password: hashedPass }
+                };
+        
+                await usersCollection.updateOne({ _id: new ObjectId(id) }, updateDoc);
+        
+                res.json({
+                    status: true,
+                    message: "Password successfully changed"
+                });
+        
+            } catch (error) {
+                console.error("Reset password error:", error);
+                res.status(500).json({
+                    status: false,
+                    message: "Internal server error"
+                });
+            }
+        });
+        
     } catch (error) {
         console.error("❌ MongoDB Connection Error:", error);
     }
