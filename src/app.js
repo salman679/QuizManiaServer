@@ -8,6 +8,7 @@ const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
 const bcrypt = require("bcrypt");
+const nodemailer = require('nodemailer')
 
 const app = express()
 app.use(express.json())
@@ -296,6 +297,83 @@ async function run() {
                 userInfo: userExist
             })
         })
+
+        // reset password API 
+        app.get('/reset-password/:email', async (req, res) => {
+            const email = req.params.email
+            const userExist = await usersCollection.findOne({ email: email })
+            if (!userExist) {
+                res.json({ status: false, message: "User Not Found!" })
+                return
+            }
+
+            const html = `
+                <p>Hi, ${userExist.username},</p>
+                <p>Here's your password recovery link</p>
+                <a href="http://localhost:3000/auth/reset-password?secretcode=${userExist?._id}">Reset password here</a>
+                <p>Best regards, QuizMania</p>
+            `;
+
+            const transporter = nodemailer.createTransport({
+                service: "gmail",
+                auth: {
+                    user: process.env.GOOGLE_ACCOUNT_USER,
+                    pass: process.env.GOOGLE_ACCOUNT_PASS,
+                },
+            })
+
+            const info = await transporter.sendMail({
+                from: `"QuizMania" <noreply@quizmania.com>`,
+                to: email,
+                subject: `Reset your QuizMania password`,
+                html: html,
+            })
+
+            res.json({
+                status: true,
+                message: "Email send successfully, Check inbox or spam of email",
+                email: email,
+                info: info,
+            });
+        })
+
+        
+        app.patch('/reset-password/:id', async (req, res) => {
+            try {
+                const id = req.params.id;
+                const { password } = req.body;
+        
+                const user = await usersCollection.findOne({ _id: new ObjectId(id) });
+        
+                if (!user) {
+                    return res.status(404).json({
+                        status: false,
+                        message: "User not found"
+                    });
+                }
+        
+                const hashedPass = await bcrypt.hash(password, 10);
+        
+                const updateDoc = {
+                    $set: { password: hashedPass }
+                };
+        
+                await usersCollection.updateOne({ _id: new ObjectId(id) }, updateDoc);
+        
+                res.status(200).json({
+                    status: true,
+                    message: "Password successfully changed"
+                });
+        
+            } catch (error) {
+                console.error("Reset password error:", error);
+                res.status(500).json({
+                    status: false,
+                    message: "Internal server error"
+                });
+            }
+        });
+        
 
     } catch (error) {
         console.error("❌ MongoDB Connection Error:", error);
