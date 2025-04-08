@@ -8,6 +8,7 @@ const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
 const bcrypt = require("bcrypt");
+const nodemailer = require('nodemailer')
 
 const app = express()
 app.use(express.json())
@@ -295,6 +296,45 @@ async function run() {
                 status: true,
                 userInfo: userExist
             })
+        })
+
+        // reset password API 
+        app.get('/reset-password/:email', async (req, res) => {
+            const email = req.params.email
+            const userExist = await usersCollection.findOne({ email: email })
+            if (!userExist) {
+                res.json({ status: false, message: "User Not Found!" })
+                return
+            }
+
+            const html = `
+                <p>Hi, ${userExist.username},</p>
+                <p>Here's your password recovery link</p>
+                <a href="https://localhost:3000/auth/reset-password?secretcode=${userExist?._id}">Reset password here</a>
+                <p>Best regards, QuizMania</p>
+            `;
+
+            const transporter = nodemailer.createTransport({
+                service: "gmail",
+                auth: {
+                    user: process.env.GOOGLE_ACCOUNT_USER,
+                    pass: process.env.GOOGLE_ACCOUNT_PASS,
+                },
+            })
+
+            const info = await transporter.sendMail({
+                from: `"QuizMania" <noreply@quizmania.com>`,
+                to: email,
+                subject: `Reset your QuizMania password`,
+                html: html,
+            })
+
+            res.json({
+                status: true,
+                message: "Email send successfully, Check inbox or spam of email",
+                email: email,
+                info: info,
+            });
         })
 
     } catch (error) {
