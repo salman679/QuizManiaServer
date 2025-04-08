@@ -310,7 +310,7 @@ async function run() {
             const html = `
                 <p>Hi, ${userExist.username},</p>
                 <p>Here's your password recovery link</p>
-                <a href="http://localhost:3000/auth/reset-password?secretcode=${userExist?._id}">Reset password here</a>
+                <a href="https://localhost:3000/auth/reset-password?secretcode=${userExist?._id}">Reset password here</a>
                 <p>Best regards, QuizMania</p>
             `;
 
@@ -336,45 +336,6 @@ async function run() {
                 info: info,
             });
         })
-
-        
-        app.patch('/reset-password/:id', async (req, res) => {
-            try {
-                const id = req.params.id;
-                const { password } = req.body;
-        
-                const user = await usersCollection.findOne({ _id: new ObjectId(id) });
-        
-                if (!user) {
-                    return res.status(404).json({
-                        status: false,
-                        message: "User not found"
-                    });
-                }
-        
-                const hashedPass = await bcrypt.hash(password, 10);
-        
-                const updateDoc = {
-                    $set: { password: hashedPass }
-                };
-        
-                await usersCollection.updateOne({ _id: new ObjectId(id) }, updateDoc);
-        
-                res.status(200).json({
-                    status: true,
-                    message: "Password successfully changed"
-                });
-        
-            } catch (error) {
-                console.error("Reset password error:", error);
-                res.status(500).json({
-                    status: false,
-                    message: "Internal server error"
-                });
-            }
-        });
-        
-
     } catch (error) {
         console.error("❌ MongoDB Connection Error:", error);
     }
