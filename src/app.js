@@ -51,6 +51,9 @@ async function run() {
         // Users Collection 
         const usersCollection = database.collection("users")
 
+        // Reset Password Expire Collection 
+        const expireCollection = database.collection("expire")
+
         // Create quiz API
         app.post('/generate-quiz', async (req, res) => {
             try {
@@ -307,12 +310,30 @@ async function run() {
                 return
             }
 
+            const expireUserExist = await expireCollection.findOne({ email: email })
+
+            if (!expireUserExist) {
+                await expireCollection.insertOne({
+                    email: email,
+                    expiresAt: new Date(Date.now() + 1000 * 60 * 5), // 5 min
+                })
+            }
+
+            if (expireUserExist) {
+                await expireCollection.updateOne({ email: email }, {
+                    $set: {
+                        expiresAt: new Date(Date.now() + 1000 * 60 * 5), // 5 min
+                    }
+                })
+            }
+
             const html = `
                 <p>Hi, ${userExist.username},</p>
                 <p>Here's your password recovery link</p>
                 <a href="http://localhost:3000/auth/reset-password?secretcode=${userExist?._id}">Reset password here</a>
                 <p>Best regards, QuizMania </p>
             `;
+
 
             const transporter = nodemailer.createTransport({
                 service: "gmail",
@@ -329,6 +350,7 @@ async function run() {
                 html: html,
             })
 
+
             res.json({
                 status: true,
                 message: "Email send successfully, Check inbox or spam of email",
@@ -341,29 +363,43 @@ async function run() {
             try {
                 const id = req.params.id;
                 const { password } = req.body;
-        
+
                 const user = await usersCollection.findOne({ _id: new ObjectId(id) });
-        
+
+                const expireUser = await expireCollection.findOne({ email: user?.email })
+
+                const now = new Date();
+                const expiresAt = new Date(expireUser?.expiresAt)
+
+                const fiveMinutesInMs = 1000 * 60 * 5;
+
+                if (now.getTime() - expiresAt.getTime() > fiveMinutesInMs) {
+                    res.json({
+                        expired: true,
+                    })
+                    return
+                }
+
                 if (!user) {
                     return res.status(404).json({
                         status: false,
                         message: "User not found"
                     });
                 }
-        
+
                 const hashedPass = await bcrypt.hash(password, 10);
-        
+
                 const updateDoc = {
                     $set: { password: hashedPass }
                 };
-        
+
                 await usersCollection.updateOne({ _id: new ObjectId(id) }, updateDoc);
-        
+
                 res.json({
                     status: true,
                     message: "Password successfully changed"
                 });
-        
+
             } catch (error) {
                 console.error("Reset password error:", error);
                 res.status(500).json({
@@ -373,6 +409,7 @@ async function run() {
             }
         });
         
+
     } catch (error) {
         console.error("❌ MongoDB Connection Error:", error);
     }
