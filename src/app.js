@@ -359,7 +359,6 @@ async function run() {
             });
         })
 
-
         app.patch('/reset-password/:id', async (req, res) => {
             try {
                 const id = req.params.id;
@@ -409,7 +408,7 @@ async function run() {
                 });
             }
         });
-
+        
 
     } catch (error) {
         console.error("❌ MongoDB Connection Error:", error);
@@ -462,8 +461,4 @@ module.exports = app;
 //             ],
 //             "answer": "Character"
 //         }
-//     ]#
-
-
-
-// email ->
+//     ]
