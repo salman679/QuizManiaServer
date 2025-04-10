@@ -130,14 +130,14 @@ async function run() {
             }
         });
 
-        // get the quiz set that user just created 
+        // get the quiz set that user just created API
         app.get('/get-quiz-set/:id', async (req, res) => {
             const id = req.params.id;
             const result = await quizzesCollection.findOne({ _id: new ObjectId(id) });
             res.json(result);
         })
 
-        // checking the quiz answer 
+        // checking the quiz answer API
         app.post('/answer/checking', async (req, res) => {
             try {
                 const { id, answers } = req.body;
@@ -287,7 +287,7 @@ async function run() {
             })
         })
 
-        // get user for auth js 
+        // get user for auth js API
         app.get('/signin/:email', async (req, res) => {
             const email = req.params.email
             const userExist = await usersCollection.findOne({ email: email })
@@ -330,7 +330,7 @@ async function run() {
             const html = `
                 <p>Hi, ${userExist.username},</p>
                 <p>Here's your password recovery link</p>
-                <a href="http://localhost:3000/auth/reset-password?secretcode=${userExist?._id}">Reset password here</a>
+                <a href="https://quizzmaniaa.vercel.app/auth/reset-password?secretcode=${userExist?._id}">Reset password here</a>
                 <p>Best regards, QuizMania </p>
             `;
 
@@ -359,6 +359,7 @@ async function run() {
             });
         })
 
+        // reset password request confirmation API 
         app.patch('/reset-password/:id', async (req, res) => {
             try {
                 const id = req.params.id;
