@@ -409,7 +409,24 @@ async function run() {
                 });
             }
         });
-        
+
+        app.get('/user/stats/:email', async (req, res) => {
+            const email = req.params.email
+            const totalQuiz = await quizzesCollection.find({ user: email }).toArray()
+            const solvedQuiz = await quizzesCollection.find({ user: email, status: "solved" }).toArray()
+            const totalCorrect = solvedQuiz.reduce((sum, quiz) => sum + quiz.correctQuizAnswer, 0);
+            const totalPossible = solvedQuiz.reduce((sum, quiz) => sum + quiz.parsedQuizData.length, 0);
+            const percentage = (totalCorrect / totalPossible) * 100;
+
+
+            res.json({
+                status: true,
+                totalQuiz,
+                solvedQuiz,
+                averageMark: parseInt(percentage)+"%"
+            })
+
+        })
 
     } catch (error) {
         console.error("❌ MongoDB Connection Error:", error);
