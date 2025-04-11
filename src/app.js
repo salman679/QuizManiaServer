@@ -327,246 +327,132 @@ async function run() {
                 })
             }
 
-            // const html = `
-            //     <p>Hi, ${userExist.username},</p>
-            //     <p>Here's your password recovery link</p>
-            //     <a href="https://quizzmaniaa.vercel.app/auth/reset-password?secretcode=${userExist?._id}">Reset password here</a>
-            //     <p>Best regards, QuizMania </p>
-            // `;
-
-            // const html = `
-            // <!DOCTYPE html>
-            // <html>
-            //     <head>
-            //         <meta charset="utf-8">
-            //         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            //         <title>Reset Your QuizMania Password</title>
-            //         <style>
-            //             @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
-
-            //             body {
-            //             font-family: 'Poppins', sans-serif;
-            //             margin: 0;
-            //             padding: 0;
-            //             background-color: #f4f4f4;
-            //             }
-            //             .email-container {
-            //             max-width: 600px;
-            //             margin: 0 auto;
-            //             background-color: #ffffff;
-            //             border-radius: 8px;
-            //             overflow: hidden;
-            //             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            //             }
-            //             .email-header {
-            //             background-color: #6c5ce7;
-            //             padding: 20px;
-            //             text-align: center;
-            //             }
-            //             .email-header h1 {
-            //             color: #ffffff;
-            //             margin: 0;
-            //             font-size: 24px;
-            //             font-weight: 600;
-            //             }
-            //             .email-body {
-            //             padding: 30px;
-            //             color: #333333;
-            //             }
-            //             .greeting {
-            //             font-size: 18px;
-            //             font-weight: 500;
-            //             margin-bottom: 20px;
-            //             }
-            //             .message {
-            //             font-size: 16px;
-            //             line-height: 1.6;
-            //             margin-bottom: 25px;
-            //             }
-            //             .reset-button {
-            //             display: inline-block;
-            //             background-color: #6c5ce7;
-            //             color: #ffffff !important;
-            //             text-decoration: none;
-            //             padding: 12px 30px;
-            //             border-radius: 4px;
-            //             font-weight: 500;
-            //             font-size: 16px;
-            //             margin: 15px 0;
-            //             text-align: center;
-            //             }
-            //             .reset-button:hover {
-            //             background-color: #5b4cdb;
-            //             }
-            //             .email-footer {
-            //             background-color: #f8f8f8;
-            //             padding: 20px;
-            //             text-align: center;
-            //             color: #666666;
-            //             font-size: 14px;
-            //             }
-            //             .logo {
-            //             font-weight: 700;
-            //             font-size: 22px;
-            //             color: #ffffff;
-            //             }
-            //             .warning {
-            //             font-size: 14px;
-            //             color: #666666;
-            //             margin-top: 25px;
-            //             font-style: italic;
-            //             }
-            //         </style>
-            //     </head>
-            //         <body>
-            //             <div class="email-container">
-            //             <div class="email-header">
-            //             <div class="logo">QuizMania</div>
-            //             </div>
-            //             <div class="email-body">
-            //             <div class="greeting">Hi, ${userExist.username}</div>
-            //             <div class="message">
-            //                 We received a request to reset your password for your QuizMania account. Click the button below to reset your password.
-            //             </div>
-            //             <a href="https://quizzmaniaa.vercel.app/auth/reset-password?secretcode=${userExist?._id}" class="reset-button">Reset Password</a>
-            //             <div class="warning">
-            //                 This link will expire in 5 minutes for security reasons.
-            //             </div>
-            //             <div class="message">
-            //                 If you didn't request a password reset, you can safely ignore this email.
-            //             </div>
-            //             </div>
-            //             <div class="email-footer">
-            //             <p>© ${new Date().getFullYear()} QuizMania. All rights reserved.</p>
-            //             </div>
-            //         </div>
-            //     </body>
-            // </html>
-            // `
             const html = `
             <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="utf-8" />
+            <html lang="en">
+              <head>
+                <meta charset="UTF-8" />
                 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-                <title>Reset Your QuizMania Password</title>
+                <title>Reset Your Password - QuizMania</title>
                 <style>
-                @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
-
-                body {
+                  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+            
+                  body {
                     font-family: 'Poppins', sans-serif;
+                    background-color: #f3f4f6;
                     margin: 0;
                     padding: 0;
-                    background-color: #f4f6f8;
-                    color: #333;
-                }
-
-                .email-container {
+                    color: #1f2937;
+                  }
+            
+                  .email-container {
                     max-width: 600px;
                     margin: 40px auto;
-                    background-color: #fff;
+                    background-color: #ffffff;
                     border-radius: 10px;
                     overflow: hidden;
                     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
-                }
-
-                .email-header {
-                    background: linear-gradient(135deg, #6c5ce7, #5b4cdb);
+                  }
+            
+                  .email-header {
+                    background-color: #8b5cf6;
                     padding: 30px 20px;
                     text-align: center;
-                }
-
-                .logo {
+                  }
+            
+                  .logo {
                     font-size: 26px;
                     font-weight: 700;
                     color: #ffffff;
                     letter-spacing: 1px;
-                }
-
-                .email-body {
+                  }
+            
+                  .email-body {
                     padding: 40px 30px;
-                    color: #333;
-                }
-
-                .greeting {
+                  }
+            
+                  .greeting {
                     font-size: 20px;
                     font-weight: 600;
                     margin-bottom: 20px;
-                }
-
-                .message {
+                  }
+            
+                  .message {
                     font-size: 16px;
                     line-height: 1.6;
                     margin-bottom: 25px;
-                }
-
-                .reset-button {
+                  }
+            
+                  .reset-button {
                     display: inline-block;
-                    background-color: #6c5ce7;
+                    background-color: #8b5cf6;
                     color: #ffffff !important;
                     text-decoration: none;
                     padding: 14px 36px;
-                    border-radius: 6px;
+                    border-radius: 8px;
                     font-weight: 600;
                     font-size: 16px;
                     transition: background-color 0.3s ease;
-                }
-
-                .reset-button:hover {
-                    background-color: #5848c2;
-                }
-
-                .warning {
+                  }
+            
+                  .reset-button:hover {
+                    background-color: #7c3aed;
+                  }
+            
+                  .warning {
                     font-size: 14px;
-                    color: #888;
+                    color: #6b7280;
                     margin-top: 30px;
                     font-style: italic;
-                }
-
-                .email-footer {
-                    background-color: #f1f1f1;
+                  }
+            
+                  .email-footer {
+                    background-color: #f9fafb;
                     padding: 20px;
                     text-align: center;
                     font-size: 14px;
-                    color: #777;
-                }
-
-                @media (max-width: 600px) {
+                    color: #6b7280;
+                  }
+            
+                  @media only screen and (max-width: 600px) {
                     .email-body {
-                    padding: 30px 20px;
+                      padding: 30px 20px;
                     }
-
+            
                     .reset-button {
-                    width: 100%;
-                    text-align: center;
+                      width: 100%;
+                      padding: 14px 0;
                     }
-                }
+            
+                    .logo {
+                      font-size: 22px;
+                    }
+                  }
                 </style>
-            </head>
-            <body>
+              </head>
+              <body>
                 <div class="email-container">
-                <div class="email-header">
+                  <div class="email-header">
                     <div class="logo">QuizMania</div>
-                </div>
-                <div class="email-body">
+                  </div>
+                  <div class="email-body">
                     <div class="greeting">Hi, ${userExist.username}</div>
                     <div class="message">
-                    You recently requested to reset your password for your QuizMania account.
-                    Click the button below to proceed.
+                      We received a request to reset the password associated with your QuizMania account.
+                      Click the button below to continue with the reset process.
                     </div>
                     <a href="https://quizzmaniaa.vercel.app/auth/reset-password?secretcode=${userExist?._id}" class="reset-button">Reset Password</a>
                     <div class="warning">
-                    This link will expire in 5 minutes. If you didn’t request a password reset, no further action is required.
+                      This link will expire in 5 minutes for your security. If you didn’t request this, no action is required.
                     </div>
-                </div>
-                <div class="email-footer">
+                  </div>
+                  <div class="email-footer">
                     &copy; ${new Date().getFullYear()} QuizMania. All rights reserved.
+                  </div>
                 </div>
-                </div>
-            </body>
+              </body>
             </html>
             `;
-
 
 
             const transporter = nodemailer.createTransport({
