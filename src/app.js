@@ -191,29 +191,55 @@ async function run() {
         // stored user into the mongodb API 
         app.post('/signup', async (req, res) => {
             try {
-                const { password, ...user } = req.body;
-                const existingUser = await usersCollection.findOne({ email: user?.email });
+                const { sociallogin } = req.query
+                if (sociallogin) {
+                    const body = req.body
 
-                if (existingUser) {
+                    const existingUser = await usersCollection.findOne({ email: body?.email });
+
+                    if (existingUser) {
+                        return res.json({
+                            status: false,
+                            message: 'User already exists, use another email address',
+                            data: result
+                        });
+                    }
+
+                    const updateBody = {
+                        ...body, role: "user", failedAttempts: 0, block: false
+                    }
+
+                    const result = await usersCollection.insertOne(updateBody)
                     return res.json({
-                        status: false,
-                        message: 'User already exists, use another email address',
-                        data: result
+                        status: true,
+                        message: "User added successfully",
+                        result
+                    })
+                }
+                else {
+                    const { password, ...user } = req.body;
+                    const existingUser = await usersCollection.findOne({ email: user?.email });
+
+                    if (existingUser) {
+                        return res.json({
+                            status: false,
+                            message: 'User already exists, use another email address',
+                            data: result
+                        });
+                    }
+
+                    const hashedPass = await bcrypt.hash(password, 10)
+
+                    const withRole = {
+                        ...user, password: hashedPass, role: "user", failedAttempts: 0, block: false
+                    }
+                    const insertResult = await usersCollection.insertOne(withRole);
+                    return res.json({
+                        status: true,
+                        message: 'User added successfully',
+                        data: insertResult
                     });
                 }
-
-                const hashedPass = await bcrypt.hash(password, 10)
-
-                const withRole = {
-                    ...user, password: hashedPass, role: "user", failedAttempts: 0, block: false
-                }
-                const insertResult = await usersCollection.insertOne(withRole);
-                res.json({
-                    status: true,
-                    message: 'User added successfully',
-                    data: insertResult
-                });
-
 
             } catch (error) {
                 console.error('Error adding/updating user:', error);
@@ -530,6 +556,7 @@ async function run() {
             }
         });
 
+        // user stats for showing data in user dashboard API 
         app.get('/user/stats/:email', async (req, res) => {
             const email = req.params.email
             const totalQuiz = await quizzesCollection.find({ user: email }).toArray()
@@ -544,12 +571,27 @@ async function run() {
 
             res.json({
                 status: true,
-                totalQuiz: totalQuiz.length === 0 ? 0 : totalQuiz,
-                solvedQuiz: solvedQuiz.length === 0 ? 0 : solvedQuiz,
-                averageMark: isNaN(parseFloat(percentage)) ? "0%" : parseInt(percentage) + "%"
+                totalQuiz: totalQuiz.length === 0 ? [] : totalQuiz,
+                solvedQuiz: solvedQuiz.length === 0 ? [] : solvedQuiz,
+                averageMark: isNaN(parseFloat(percentage)) ? 0 + "%" : parseInt(percentage) + "%"
             })
-
         })
+
+        app.get('/admin/stats', async (req, res) => {
+            const users = await usersCollection.find().toArray()
+
+            const quizzes = await quizzesCollection.find().toArray()
+
+            const solvedQuizzes = await quizzesCollection.find({ status: "solved" }).toArray()
+
+            res.json({
+                status: true,
+                users: users.length === 0 ? [] : users,
+                quizzes: quizzes.length === 0 ? [] : quizzes,
+                solvedQuizzes: solvedQuizzes.length === 0 ? [] : solvedQuizzes
+            })
+        })
+
 
     } catch (error) {
         console.error("❌ MongoDB Connection Error:", error);
@@ -565,41 +607,3 @@ app.get('/', (req, res) => {
 module.exports = app;
 
 
-
-
-// pass bhul > failedAttempt + 1
-// pass bhul > failedAttempt + 1
-// pass bhul > failedAttempt + 1
-// pass bhul > failedAttempt + 1
-// pass bhul > failedAttempt + 1
-
-// block: true failedAttempt == 5
-
-
-// "text": "```json\n[\n  {\n    \"type\": \"Multiple Choice\",\n    \"question\": \"What keyword is used to define a function in Python?\",\n    \"options\": [\"def\", \"function\", \"define\", \"func\"],\n    \"answer\": \"def\"\n  },\n  {\n    \"type\": \"Multiple Choice\",\n    \"question\": \"Which of the following is NOT a built-in data type in Python?\",\n    \"options\": [\"Integer\", \"String\", \"Float\", \"Character\"],\n    \"answer\": \"Character\"\n  }\n]\n```"
-
-
-// "quizzes": [
-//         {
-//             "type": "Multiple Choice",
-//             "question": "What keyword is used to define a function in Python?",
-//             "options": [
-//                 "def",
-//                 "function",
-//                 "define",
-//                 "func"
-//             ],
-//             "answer": "def"
-//         },
-//         {
-//             "type": "Multiple Choice",
-//             "question": "Which of the following is NOT a built-in data type in Python?",
-//             "options": [
-//                 "Integer",
-//                 "String",
-//                 "Float",
-//                 "Character"
-//             ],
-//             "answer": "Character"
-//         }
-//     ]
