@@ -577,20 +577,49 @@ async function run() {
             })
         })
 
+        // admin stats for showing data in admin dashboard API 
         app.get('/admin/stats', async (req, res) => {
-            const users = await usersCollection.find().toArray()
+            try {
+                const users = await usersCollection.find().toArray();
+                const quizzes = await quizzesCollection.find().toArray();
+                const solvedQuizzes = await quizzesCollection.find({ status: "solved" }).toArray();
 
-            const quizzes = await quizzesCollection.find().toArray()
+                // For each user, count their quizzes
+                const usersWithQuizCounts = await Promise.all(users.map(async (user) => {
+                    const quizCount = await quizzesCollection.countDocuments({ user: user.email });
+                    const lastActive = new Date(user.lastLoginTime)
+                    const now = new Date()
+                    const diffInMs = now.getTime() - lastActive.getTime()
+                    const diffInHours = diffInMs / (1000 * 60 * 60)
+                    const userStatus = diffInHours > 24 ? "offline" : "online"
+                    return {
+                        ...user,
+                        totalQuizzes: quizCount,
+                        userStatus
+                    };
+                }));
 
-            const solvedQuizzes = await quizzesCollection.find({ status: "solved" }).toArray()
+                const quizzesWithAuthorName = await Promise.all(quizzes.map(async (quiz) => {
+                    const author = await usersCollection.findOne({ email: quiz.user })
 
-            res.json({
-                status: true,
-                users: users.length === 0 ? [] : users,
-                quizzes: quizzes.length === 0 ? [] : quizzes,
-                solvedQuizzes: solvedQuizzes.length === 0 ? [] : solvedQuizzes
-            })
-        })
+                    return {
+                        ...quiz,
+                        author: author?.username
+                    }
+                }))
+
+                res.json({
+                    status: true,
+                    users: usersWithQuizCounts.length === 0 ? [] : usersWithQuizCounts,
+                    quizzes: quizzesWithAuthorName.length === 0 ? [] : quizzesWithAuthorName,
+                    solvedQuizzes: solvedQuizzes.length === 0 ? [] : solvedQuizzes
+                });
+
+            } catch (error) {
+                console.error("Error fetching admin stats:", error);
+                res.status(500).json({ status: false, message: "Server error" });
+            }
+        });
 
 
     } catch (error) {
